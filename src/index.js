@@ -49,6 +49,7 @@ class Game extends React.Component {
             }],
             stepNumber: 0,
             xIsNext: true,
+            sortAscending: true,
         };
     }
 
@@ -70,6 +71,12 @@ class Game extends React.Component {
         });
     }
 
+    handleToggleClick() {
+      this.setState({
+        sortAscending: !this.state.sortAscending,
+      });
+    }
+
     getSquareColumn(i) {
         return (i % 3) + 1;
     }
@@ -86,21 +93,29 @@ class Game extends React.Component {
     }
 
     render() {
-        const history = this.state.history;
-        const current = history[this.state.stepNumber];
+        let history = this.state.history;
+        let stepNumber = this.state.stepNumber;
+        let gameStartIdx = 0;
+        if (!this.state.sortAscending) {
+          history = history.slice().reverse();
+          stepNumber = history.length - 1 - stepNumber;
+          gameStartIdx = history.length - 1;
+        }
+        const current = history[stepNumber];
         const winner = calculateWinner(current.squares);
 
         const moves = history.map((step, move) => {
             const col = this.getSquareColumn(step.clicked);
             const row = this.getSquareRow(step.clicked);
-            const desc = move ?
-                `Go to move # ${move} (${col},${row})` :
+            const moveLabel = this.state.sortAscending ? move : history.length - 1 - move;
+            const desc = move !== gameStartIdx ?
+                `Go to move # ${moveLabel} (${col},${row})` :
                 "Go to game start";
-            const moveButtonClass = move === this.state.stepNumber ? "move-button-selected" : "";
+            const moveButtonClass = move === stepNumber ? "move-button-selected" : "";
             return (
-                <li key={move}>
+                <li key={moveLabel}>
                     <button
-                        onClick={() => this.jumpTo(move)}
+                        onClick={() => this.jumpTo(moveLabel)}
                         className={moveButtonClass}
                     >
                         {desc}
@@ -115,6 +130,7 @@ class Game extends React.Component {
         } else {
             status = `Next player: ${this.state.xIsNext ? 'X' : 'O'}`;
         }
+        const sortButtonText = `Sort ${this.state.sortAscending ? "Descending" : "Ascending"}`;
         return (
             <div className="game">
                 <div className="game-board">
@@ -125,7 +141,10 @@ class Game extends React.Component {
                 </div>
                 <div className="game-info">
                     <div>{status}</div>
-                    <ol>{moves}</ol>
+                    <ul>{moves}</ul>
+                    <div>
+                      <button onClick={() => this.handleToggleClick()}>{sortButtonText}</button>
+                    </div>
                 </div>
             </div>
         );
